@@ -1,38 +1,65 @@
 #!/bin/bash
 
 # Set default theme to luci-theme-argon
-uci set luci.main.mediaurlbase='/luci-static/design'
+uci set luci.main.mediaurlbase='/luci-static/kucat'
 uci commit luci
 
-# diagnostics
+# Set NTP
+uci -q batch <<-EOF
+	set system.@system[0].timezone='CST-8'
+	set system.@system[0].zonename='Asia/Shanghai'
+
+	delete system.ntp.server
+	add_list system.ntp.server='ntp1.aliyun.com'
+	add_list system.ntp.server='ntp.tencent.com'
+	add_list system.ntp.server='ntp.ntsc.ac.cn'
+	add_list system.ntp.server='time.apple.com'
+EOF
+uci commit system
+
+# Set password
+sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
+sed -i 's/root:::0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
+
+# Set diagnostics
 uci set luci.diag.dns='www.qq.com'
 uci set luci.diag.ping='www.qq.com'
 uci set luci.diag.route='www.qq.com'
 uci commit luci
 
-# 设置主机名映射，解决安卓原生TV首次连不上网的问题
+# Set up hostname mapping
 uci add dhcp domain
 uci set "dhcp.@domain[-1].name=time.android.com"
 uci set "dhcp.@domain[-1].ip=203.107.6.88"
 uci commit dhcp
 
-# 设置所有网口可访问网页终端
+# Set SSH
 uci delete ttyd.@ttyd[0].interface
-
-# 设置所有网口可连接 SSH
 uci set dropbear.@dropbear[0].Interface=''
 uci commit
 
-# docker mirror
-if [ -f /etc/config/dockerd ] && [ $(grep -c daocloud.io /etc/config/dockerd) -eq '0' ]; then
-    uci add_list dockerd.globals.registry_mirrors="https://docker.m.daocloud.io"
-    uci commit dockerd
+# Set zram
+mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+zram_size=$(echo | awk "{print int($mem_total*0.25/1024)}")
+uci set system.@system[0].zram_size_mb="$zram_size"
+uci set system.@system[0].zram_comp_algo='zstd'
+uci commit system
+
+# Set distfeeds.conf
+if [ $(grep -c SNAPSHOT /etc/opkg/distfeeds.conf) -eq '0' ]; then
+    sed -i 's,downloads.openwrt.org,mirrors.aliyun.com/openwrt,g' /etc/opkg/distfeeds.conf
+else
+    sed -i 's,downloads.openwrt.org,mirror.sjtu.edu.cn/openwrt,g' /etc/opkg/distfeeds.conf
 fi
 
-# adguardhome
-chmod +x /usr/share/AdGuardHome/addhost.sh
+# Disable IPV6 ula prefix
+# sed -i 's/^[^#].*option ula/#&/' /etc/config/network
 
-# Smartdns related settings
+# Check file system during boot
+# uci set fstab.@global[0].check_fs=1
+# uci commit fstab
+
+# Smartdns相关设置
 uci add smartdns server
 uci set smartdns.@server[0].enabled='1'
 uci set smartdns.@server[0].type='udp'

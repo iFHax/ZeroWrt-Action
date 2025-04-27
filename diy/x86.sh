@@ -111,7 +111,7 @@ pushd feeds/packages
 popd
 
 # 加载软件源
-git clone https://github.com/yndzm/V package/openwrt-package
+git clone https://github.com/yndzm/N package/openwrt-package
 
 # Realtek 网卡 - R8168 & R8125 & R8126 & R8152 & R8101
 rm -rf package/kernel/r8168 package/kernel/r8101 package/kernel/r8125 package/kernel/r8126

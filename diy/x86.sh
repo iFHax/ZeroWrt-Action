@@ -111,7 +111,7 @@ pushd feeds/packages
 popd
 
 # 加载软件源
-git clone https://github.com/yndzm/N package/openwrt-package
+git clone https://github.com/yndzm/V package/openwrt-package
 
 # Realtek 网卡 - R8168 & R8125 & R8126 & R8152 & R8101
 rm -rf package/kernel/r8168 package/kernel/r8101 package/kernel/r8125 package/kernel/r8126
@@ -122,7 +122,7 @@ git clone https://git.kejizero.online/zhao/package_kernel_r8125 package/kernel/r
 git clone https://git.kejizero.online/zhao/package_kernel_r8126 package/kernel/r8126
 
 # 修改名称
-sed -i 's/OpenWrt/XWrt/' package/base-files/files/bin/config_generate
+sed -i 's/OpenWrt/NikkiOS/' package/base-files/files/bin/config_generate
 
 # default-settings
 git clone --depth=1 -b openwrt-24.10 https://github.com/oppen321/default-settings package/default-settings
